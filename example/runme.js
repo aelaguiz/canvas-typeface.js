@@ -6,7 +6,7 @@ require(__dirname + "/setup").ext( __dirname + "/lib/express/support");
 var connect = require('connect')
     , express = require('./express')
     , sys = require('sys')
-    , port = 8124;
+    , port = 8081;
 
 //Setup Express
 var server = express.createServer();
@@ -49,7 +49,6 @@ server.listen( port);
 /////// ADD ALL YOUR ROUTES HERE  /////////
 
 server.get('/', function(req,res){
-	console.log("Rendering root");
   res.render('index.ejs', {
    locals : { 
               header: ''

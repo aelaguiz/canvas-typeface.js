@@ -167,7 +167,12 @@ CanvasTypeface.prototype = {
 			textDecoration: options.textDecoration,
 			lineHeight: options.lineHeight,
 			letterSpacing: options.letterSpacing ? options.letterSpacing : 0,
-			textTransform: options.textTransform
+			textTransform: options.textTransform,
+			rotationX: options.rotationX ? options.rotationX: 0,
+			rotationY: options.rotationY ? options.rotationY: 0,
+			rotationZ: options.rotationZ ? options.rotationZ: 0,
+			eyeDistance: options.eyeDistance ? options.eyeDistance: 0,
+			z: options.z ? options.z: 0,
 		};
 
 		var face;
@@ -215,15 +220,13 @@ CanvasTypeface.prototype = {
 		
 		ctx.save();
 		
-		ctx.transform(1, 0, 1, 1, 0, 0);
-		
 		this.initializeSurface(face, style, text, ctx);
 		
 		var wordsLength = words.length;
 		for (var i = 0; i < wordsLength; i++) {
 			var word = words[i];
 			
-			console.log("Rendering word " + word);
+			//console.log("Rendering word " + word);
 			this.renderWord(face, style, word, ctx);
 		}
 		
@@ -239,8 +242,48 @@ CanvasTypeface.prototype = {
 		ctx.translate(0, -1 * face.ascender);
 		ctx.fillStyle = style.color;
 	},
+	projectedX: function projectedX(x, y,z, eyeDistance) {
+		return x / ((z + eyeDistance)/eyeDistance);
+	},
+	projectedY: function projectedY(x, y,z, eyeDistance) {
+		return y / ((z + eyeDistance)/eyeDistance);
+	},
+	projectedCoords: function projectedCoords(x, y, z, eyeDistance) {
+		return {x: this.projectedX(x,y,z,eyeDistance), y: this.projectedY(x,y,z,eyeDistance)};
+	},
+	rotateCoordinates: function rotateCoordinates(inCoords, outCoords,RadianX, RadianY, RadianZ) {
+		var x= inCoords[0],
+			y = inCoords[1],
+			z = inCoords[2],
+			sinY = Math.sin(RadianY),
+			sinX = Math.sin(RadianX),
+			sinZ = Math.sin(RadianZ),
+			cosY = Math.cos(RadianY),
+			cosX = Math.cos(RadianX),
+			cosZ = Math.cos(RadianZ);
+		
+		outCoords[0] = (x * (cosY * cosZ)) + 
+						(y * (-cosX*sinZ+sinX*sinY*cosZ)) + 
+						(z * (sinX*sinZ+cosX*sinY*cosZ));
+						
+		outCoords[1] = (x * (cosY * sinZ)) + 
+						(y * (cosX * cosZ+sinX*sinY*sinZ)) + 
+						(z * (-sinX * cosZ+cosX*sinY*sinZ));
+						
+		outCoords[2] = (x * -sinY) + 
+						(y * (sinX * cosY)) + 
+						(z * (cosX * cosY));
+	},
 	renderGlyph: function(ctx, face, char, style) {
-
+		var z = style.z,
+			eyeDistance = style.eyeDistance,
+			rX = style.rotationX, 
+			rY = style.rotationY, 
+			rZ = style.rotationZ,
+		 	coords,
+			rotCoords = [],
+			quadCoords,
+			bezCoords;
 		var glyph = face.glyphs[char];
 
 		if (!glyph) {
@@ -265,22 +308,36 @@ CanvasTypeface.prototype = {
 
 				switch(action) {
 					case 'm':
-						ctx.moveTo(outline[i++], outline[i++]);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						ctx.moveTo(coords.x, coords.y);
 						break;
 					case 'l':
-						ctx.lineTo(outline[i++], outline[i++]);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						ctx.lineTo(coords.x, coords.y);
 						break;
 
 					case 'q':
-						var cpx = outline[i++];
-						var cpy = outline[i++];
-						ctx.quadraticCurveTo(outline[i++], outline[i++], cpx, cpy);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						ctx.quadraticCurveTo(quadCoords.x, quadCoords.y, coords.x, coords.y);
 						break;
 
 					case 'b':
-						var x = outline[i++];
-						var y = outline[i++];
-						ctx.bezierCurveTo(outline[i++], outline[i++], outline[i++], outline[i++], x, y);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						bezCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						
+						ctx.bezierCurveTo(bezCoords.x, bezCoords.y, quadCoords.x, quadCoords.y, coords.x, coords.y);
 						break;
 				}
 			}					
@@ -291,7 +348,7 @@ CanvasTypeface.prototype = {
 					this.pointsFromPixels(face, style, style.letterSpacing) : 
 					0;
 
-			console.log("Translated " + (glyph.ha + letterSpacingPoints));
+			//console.log("Translated " + (glyph.ha + letterSpacingPoints));
 			ctx.translate(glyph.ha + letterSpacingPoints, 0);
 		}
 	},
