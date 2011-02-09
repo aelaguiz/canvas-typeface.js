@@ -251,10 +251,10 @@ CanvasTypeface.prototype = {
 	projectedCoords: function projectedCoords(x, y, z, eyeDistance) {
 		return {x: this.projectedX(x,y,z,eyeDistance), y: this.projectedY(x,y,z,eyeDistance)};
 	},
-	rotateCoordinates: function rotateCoordinates(inCoords, outCoords,RadianX, RadianY, RadianZ) {
-		var x= inCoords[0],
-			y = inCoords[1],
-			z = inCoords[2],
+	rotateCoordinates: function rotateCoordinates(inCoords, outCoords,RadianX, RadianY, RadianZ, OriginX, OriginY, OriginZ) {
+		var x= inCoords[0]-OriginX,
+			y = inCoords[1]-OriginY,
+			z = inCoords[2]-OriginZ,
 			sinY = Math.sin(RadianY),
 			sinX = Math.sin(RadianX),
 			sinZ = Math.sin(RadianZ),
@@ -264,15 +264,16 @@ CanvasTypeface.prototype = {
 		
 		outCoords[0] = (x * (cosY * cosZ)) + 
 						(y * (-cosX*sinZ+sinX*sinY*cosZ)) + 
-						(z * (sinX*sinZ+cosX*sinY*cosZ));
+						(z * (sinX*sinZ+cosX*sinY*cosZ)) + OriginX;
 						
 		outCoords[1] = (x * (cosY * sinZ)) + 
 						(y * (cosX * cosZ+sinX*sinY*sinZ)) + 
-						(z * (-sinX * cosZ+cosX*sinY*sinZ));
+						(z * (-sinX * cosZ+cosX*sinY*sinZ)) + OriginY;
 						
 		outCoords[2] = (x * -sinY) + 
 						(y * (sinX * cosY)) + 
-						(z * (cosX * cosY));
+						(z * (cosX * cosY)) + OriginZ;
+						
 	},
 	renderGlyph: function(ctx, face, char, style) {
 		var z = style.z,
@@ -283,7 +284,12 @@ CanvasTypeface.prototype = {
 		 	coords,
 			rotCoords = [],
 			quadCoords,
-			bezCoords;
+			bezCoords,
+			glyphWidth,
+			glyphHeight,
+			originX = 0,
+			originY = 0,
+			originZ = style.z/2;
 		var glyph = face.glyphs[char];
 
 		if (!glyph) {
@@ -291,8 +297,9 @@ CanvasTypeface.prototype = {
 			return this.renderGlyph(ctx, face, this.fallbackCharacter, style);
 		}
 
+		
 		if (glyph.o) {
-
+			
 			var outline;
 			if (glyph.cached_outline) {
 				outline = glyph.cached_outline;
@@ -300,7 +307,42 @@ CanvasTypeface.prototype = {
 				outline = glyph.o.split(' ');
 				glyph.cached_outline = outline;
 			}
+			
+			glyphWidth = glyph.x_max-glyph.x_min;
+			glyphHeight = face.ascender;
+			
+			originX = glyphWidth/2;
+			originY = glyphHeight/2;
 
+
+			/*
+			 * Draws an origin x so it's easier to picture rotation, but not useful for production
+			 */
+
+			/*
+			ctx.lineWidth=5;
+			this.rotateCoordinates([originX, 0, z], rotCoords, rX,rY,rZ, originX, originY, 0);
+			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+			ctx.moveTo(coords.x, coords.y);
+			
+			this.rotateCoordinates([originX, glyphHeight, z], rotCoords, rX,rY,rZ, originX, originY, 0);
+			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+			ctx.lineTo(coords.x, coords.y);
+			
+			ctx.stroke();
+			
+			this.rotateCoordinates([0, originY, z], rotCoords, rX,rY,rZ, originX, originY, 0);
+			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+			ctx.moveTo(coords.x, coords.y);
+			
+			this.rotateCoordinates([glyphWidth, originY, z], rotCoords, rX,rY,rZ, originX, originY, 0);
+			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+			ctx.lineTo(coords.x, coords.y);
+			
+			ctx.stroke();
+			
+			ctx.lineWidth=1;*/
+			
 			var outlineLength = outline.length;
 			for (var i = 0; i < outlineLength; ) {
 
@@ -308,33 +350,33 @@ CanvasTypeface.prototype = {
 
 				switch(action) {
 					case 'm':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						ctx.moveTo(coords.x, coords.y);
 						break;
 					case 'l':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						ctx.lineTo(coords.x, coords.y);
 						break;
 
 					case 'q':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						ctx.quadraticCurveTo(quadCoords.x, quadCoords.y, coords.x, coords.y);
 						break;
 
 					case 'b':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						bezCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ);
+						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
 						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
 						
 						ctx.bezierCurveTo(bezCoords.x, bezCoords.y, quadCoords.x, quadCoords.y, coords.x, coords.y);
