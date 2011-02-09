@@ -32,8 +32,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 *****************************************************************/
+Typeface = function() {
+	
+}
 
-var _typeface_js = {
+Typeface.prototype = {
 
 	faces: {},
 
@@ -150,42 +153,6 @@ var _typeface_js = {
 		};
 	},
 
-	pixelsFromCssAmount: function(cssAmount, defaultValue, element) {
-
-		var matches = undefined;
-
-		if (cssAmount == 'normal') {
-			return defaultValue;
-
-		} else if (matches = cssAmount.match(/([\-\d+\.]+)px/)) {
-			return matches[1];
-
-		} else {
-			// thanks to Dean Edwards for this very sneaky way to get IE to convert 
-			// relative values to pixel values
-			
-			var pixelAmount;
-			
-			var leftInlineStyle = element.style.left;
-			var leftRuntimeStyle = element.runtimeStyle.left;
-
-			element.runtimeStyle.left = element.currentStyle.left;
-
-			if (!cssAmount.match(/\d(px|pt)$/)) {
-				element.style.left = '1em';
-			} else {
-				element.style.left = cssAmount || 0;
-			}
-
-			pixelAmount = element.style.pixelLeft;
-		
-			element.style.left = leftInlineStyle;
-			element.runtimeStyle.left = leftRuntimeStyle;
-			
-			return pixelAmount || defaultValue;
-		}
-	},
-
 	capitalizeText: function(text) {
 		return text.replace(/(^|\s)[a-z]/g, function(match) { return match.toUpperCase() } ); 
 	},
@@ -199,38 +166,18 @@ var _typeface_js = {
 		}
 	},
 
-	getRenderedText: function(e) {
-
-		var browserStyle = this.getElementStyle(e.parentNode);
-
-		var inlineStyleAttribute = e.parentNode.getAttribute('style');
-		if (inlineStyleAttribute && typeof(inlineStyleAttribute) == 'object') {
-			inlineStyleAttribute = inlineStyleAttribute.cssText;
-		}
-
-		if (inlineStyleAttribute) {
-
-			var inlineStyleDeclarations = inlineStyleAttribute.split(/\s*\;\s*/);
-
-			var inlineStyle = {};
-			for (var i = 0; i < inlineStyleDeclarations.length; i++) {
-				var declaration = inlineStyleDeclarations[i];
-				var declarationOperands = declaration.split(/\s*\:\s*/);
-				inlineStyle[declarationOperands[0]] = declarationOperands[1];
-			}
-		}
-
+	render: function(text, options, graphics) {
 		var style = { 
-			color: browserStyle.color, 
-			fontFamily: browserStyle.fontFamily.split(/\s*,\s*/)[0].replace(/(^"|^'|'$|"$)/g, '').toLowerCase(), 
-			fontSize: this.pixelsFromCssAmount(browserStyle.fontSize, 12, e.parentNode),
+			color: options.color, 
+			fontFamily: options.fontFamily.split(/\s*,\s*/)[0].replace(/(^"|^'|'$|"$)/g, '').toLowerCase(), 
+			fontSize: options.fontSize,
 			fontWeight: this.cssFontWeightMap[browserStyle.fontWeight],
-			fontStyle: browserStyle.fontStyle ? browserStyle.fontStyle : 'normal',
-			fontStretchPercent: this.cssFontStretchMap[inlineStyle && inlineStyle['font-stretch'] ? inlineStyle['font-stretch'] : 'default'],
-			textDecoration: browserStyle.textDecoration,
-			lineHeight: this.pixelsFromCssAmount(browserStyle.lineHeight, 'normal', e.parentNode),
-			letterSpacing: this.pixelsFromCssAmount(browserStyle.letterSpacing, 0, e.parentNode),
-			textTransform: browserStyle.textTransform
+			fontStyle: options.fontStyle ? options.fontStyle : 'normal',
+			fontStretchPercent: this.cssFontStretchMap[options['font-stretch'] ? options['font-stretch'] : 'default'],
+			textDecoration: options.textDecoration,
+			lineHeight: options.lineHeight,
+			letterSpacing: options.letterSpacing,
+			textTransform: options.textTransform
 		};
 
 		var face;
@@ -241,30 +188,8 @@ var _typeface_js = {
 			face = this.faces[style.fontFamily][style.fontWeight][style.fontStyle];
 		}
 
-		var text = e.nodeValue;
-		
-		if (
-			e.previousSibling 
-			&& e.previousSibling.nodeType == 1 
-			&& e.previousSibling.tagName != 'BR' 
-			&& this.getElementStyle(e.previousSibling).display.match(/inline/)
-		) {
-			text = text.replace(/^\s+/, ' ');
-		} else {
-			text = text.replace(/^\s+/, '');
-		}
-		
-		if (
-			e.nextSibling 
-			&& e.nextSibling.nodeType == 1 
-			&& e.nextSibling.tagName != 'BR' 
-			&& this.getElementStyle(e.nextSibling).display.match(/inline/)
-		) {
-			text = text.replace(/\s+$/, ' ');
-		} else {
-			text = text.replace(/\s+$/, '');
-		}
-		
+		text = text.replace(/^\s+/, '');
+		text = text.replace(/\s+$/, '');
 		text = text.replace(/\s+/g, ' ');
 	
 		if (style.textTransform && style.textTransform != 'none') {
@@ -297,56 +222,15 @@ var _typeface_js = {
 		}
 	
 		var words = text.split(/\b(?=\w)/);
-
-		var containerSpan = document.createElement('span');
-		containerSpan.className = 'typeface-js-vector-container';
 		
 		var wordsLength = words.length;
 		for (var i = 0; i < wordsLength; i++) {
 			var word = words[i];
 			
-			var vector = this.renderWord(face, style, word);
-			
-			if (vector) {
-				containerSpan.appendChild(vector.element);
-
-				if (!this.disableSelection) {
-					var selectableSpan = document.createElement('span');
-					selectableSpan.className = 'typeface-js-selected-text';
-
-					var wordNode = document.createTextNode(word);
-					selectableSpan.appendChild(wordNode);
-
-					if (this.vectorBackend != 'vml') {
-						selectableSpan.style.marginLeft = -1 * (vector.width + 1) + 'px';
-					}
-					selectableSpan.targetWidth = vector.width;
-					//selectableSpan.style.lineHeight = 1 + 'px';
-
-					if (this.vectorBackend == 'vml') {
-						vector.element.appendChild(selectableSpan);
-					} else {
-						containerSpan.appendChild(selectableSpan);
-					}
-				}
-			}
+			var vector = this.renderWord(face, style, word, graphics);
 		}
-
-		return containerSpan;
 	},
 
-	applyElementVerticalMetrics: function(face, style, e) {
-
-		if (style.lineHeight == 'normal') {
-			style.lineHeight = this.pixelsFromPoints(face, style, face.lineHeight);
-		}
-
-		var cssLineHeightAdjustment = style.lineHeight - this.pixelsFromPoints(face, style, face.lineHeight);
-
-		e.style.marginTop = Math.round( cssLineHeightAdjustment / 2 ) + 'px';
-		e.style.marginBottom = Math.round( cssLineHeightAdjustment / 2) + 'px';
-	
-	},
 	initializeSurface: function(face, style, text) {
 
 		var extents = this.getTextExtents(face, style, text);
@@ -358,8 +242,6 @@ var _typeface_js = {
 
 		canvas.height = Math.round(this.pixelsFromPoints(face, style, face.lineHeight));
 		canvas.width = Math.round(this.pixelsFromPoints(face, style, extents.x, 'horizontal'));
-
-		this.applyElementVerticalMetrics(face, style, canvas);
 
 		if (extents.x > extents.ha) 
 			canvas.style.marginRight = Math.round(this.pixelsFromPoints(face, style, extents.x - extents.ha, 'horizontal')) + 'px';
@@ -456,15 +338,5 @@ var _typeface_js = {
 
 		return { element: ctx.canvas, width: Math.floor(canvas.width) };
 	
-	},
-	setVectorBackend: function(backend) {
-
-		this.vectorBackend = backend;
-		var backendFunctions = ['renderWord', 'initializeSurface', 'renderGlyph'];
-
-		for (var i = 0; i < backendFunctions.length; i++) {
-			var backendFunction = backendFunctions[i];
-			this[backendFunction] = this.vectorBackends[backend]['_' + backendFunction];
-		}
 	}
 };
