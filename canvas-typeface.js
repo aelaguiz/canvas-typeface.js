@@ -156,17 +156,17 @@ CanvasTypeface.prototype = {
 	capitalizeText: function(text) {
 		return text.replace(/(^|\s)[a-z]/g, function(match) { return match.toUpperCase() } ); 
 	},
-	render: function(text, options, graphics) {
+	render: function(text, options, ctx) {
 		var style = { 
 			color: options.color, 
 			fontFamily: options.fontFamily.split(/\s*,\s*/)[0].replace(/(^"|^'|'$|"$)/g, '').toLowerCase(), 
 			fontSize: options.fontSize,
-			fontWeight: this.cssFontWeightMap[options.fontWeight],
+			fontWeight: this.cssFontWeightMap[options.fontWeight ? options.fontWeight : 'normal'],
 			fontStyle: options.fontStyle ? options.fontStyle : 'normal',
 			fontStretchPercent: this.cssFontStretchMap[options['font-stretch'] ? options['font-stretch'] : 'default'],
 			textDecoration: options.textDecoration,
 			lineHeight: options.lineHeight,
-			letterSpacing: options.letterSpacing,
+			letterSpacing: options.letterSpacing ? options.letterSpacing : 0,
 			textTransform: options.textTransform
 		};
 
@@ -213,12 +213,21 @@ CanvasTypeface.prototype = {
 	
 		var words = text.split(/\b(?=\w)/);
 		
+		ctx.save();
+		
+		ctx.transform(1, 0, 1, 1, 0, 0);
+		
+		this.initializeSurface(face, style, text, ctx);
+		
 		var wordsLength = words.length;
 		for (var i = 0; i < wordsLength; i++) {
 			var word = words[i];
 			
-			this.renderWord(face, style, word, graphics);
+			console.log("Rendering word " + word);
+			this.renderWord(face, style, word, ctx);
 		}
+		
+		ctx.restore();
 	},
 
 	initializeSurface: function(face, style, text, ctx) {
@@ -282,16 +291,12 @@ CanvasTypeface.prototype = {
 					this.pointsFromPixels(face, style, style.letterSpacing) : 
 					0;
 
+			console.log("Translated " + (glyph.ha + letterSpacingPoints));
 			ctx.translate(glyph.ha + letterSpacingPoints, 0);
 		}
 	},
 	renderWord: function(face, style, text, ctx) {
-		ctx.save();
-		
-		this.initializeSurface(face, style, text, ctx);
-
 		ctx.beginPath();
-		ctx.save();
 
 		var chars = text.split('');
 		var charsLength = chars.length;
@@ -305,15 +310,13 @@ CanvasTypeface.prototype = {
 
 			ctx.beginPath();
 			ctx.moveTo(0, face.underlinePosition);
-			ctx.restore();
+			//ctx.restore();
 			ctx.lineTo(0, face.underlinePosition);
 			ctx.strokeStyle = style.color;
 			ctx.lineWidth = face.underlineThickness;
 			ctx.stroke();
 		}
-
-		ctx.restore();	
 	}
 };
 
-_typeface_js = new CanvasTypeface();
+Typeface = _typeface_js = new CanvasTypeface();
