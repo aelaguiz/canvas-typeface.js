@@ -1,1 +1,4 @@
 Typeface.js stripped down and modified for use in canvas games
+
+Adds 3d rotation support and a crappy false perspective projection mechanism.
+
