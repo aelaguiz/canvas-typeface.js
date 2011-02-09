@@ -49,17 +49,16 @@ server.listen( port);
 /////// ADD ALL YOUR ROUTES HERE  /////////
 
 server.get('/', function(req,res){
-	console.log("Rendering root");
-  res.render('index.ejs', {
-   locals : { 
-              header: ''
-             ,footer: ''
-             ,title : 'Page Title'
-             ,description: 'Page Description'
-             ,author: 'Your Name'
-             ,analyticssiteid: 'XXXXXXX' 
-            }
-  });
+  	res.render('index.ejs', {
+	   	locals : { 
+	              header: ''
+	             ,footer: ''
+	             ,title : 'Page Title'
+	             ,description: 'Page Description'
+	             ,author: 'Your Name'
+	             ,analyticssiteid: 'XXXXXXX' 
+		}
+ 	});
 });
 
 

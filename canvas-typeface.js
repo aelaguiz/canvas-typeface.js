@@ -156,7 +156,7 @@ CanvasTypeface.prototype = {
 	capitalizeText: function(text) {
 		return text.replace(/(^|\s)[a-z]/g, function(match) { return match.toUpperCase() } ); 
 	},
-	render: function(text, options, ctx) {
+	render: function(text, options) {
 		var style = { 
 			color: options.color, 
 			fontFamily: options.fontFamily.split(/\s*,\s*/)[0].replace(/(^"|^'|'$|"$)/g, '').toLowerCase(), 
@@ -212,32 +212,39 @@ CanvasTypeface.prototype = {
 		}
 	
 		var words = text.split(/\b(?=\w)/);
-		
-		ctx.save();
-		
-		ctx.transform(1, 0, 1, 1, 0, 0);
-		
-		this.initializeSurface(face, style, text, ctx);
+		var surface = this.initializeSurface(face, style, words);
 		
 		var wordsLength = words.length;
 		for (var i = 0; i < wordsLength; i++) {
 			var word = words[i];
 			
-			console.log("Rendering word " + word);
-			this.renderWord(face, style, word, ctx);
+			this.renderWord(face, style, word, surface);
 		}
 		
-		ctx.restore();
+		return surface;
 	},
 
-	initializeSurface: function(face, style, text, ctx) {
+	initializeSurface: function(face, style, words) {
+		var canvas = document.createElement('canvas');
+		
+		canvas.height = Math.round(this.pixelsFromPoints(face, style, face.lineHeight));
+		canvas.width = 0;
+		
+		for(var i = 0, max = words.length; i < max; i++) {
+			var text = words[i];
+			
+			var extents = this.getTextExtents(face, style, text);
+			canvas.width += Math.round(this.pixelsFromPoints(face, style, extents.x, 'horizontal'));
+		}
 
-		var extents = this.getTextExtents(face, style, text);
-
+		var ctx = canvas.getContext('2d');
+		
 		var pointScale = this.pixelsFromPoints(face, style, 1);
 		ctx.scale(pointScale * style.fontStretchPercent, -1 * pointScale);
 		ctx.translate(0, -1 * face.ascender);
 		ctx.fillStyle = style.color;
+		
+		return { context: ctx, canvas: canvas };
 	},
 	renderGlyph: function(ctx, face, char, style) {
 
@@ -291,13 +298,15 @@ CanvasTypeface.prototype = {
 					this.pointsFromPixels(face, style, style.letterSpacing) : 
 					0;
 
-			console.log("Translated " + (glyph.ha + letterSpacingPoints));
 			ctx.translate(glyph.ha + letterSpacingPoints, 0);
 		}
 	},
-	renderWord: function(face, style, text, ctx) {
+	renderWord: function(face, style, text, surface) {
+		var ctx = surface.context;
+		var canvas = surface.canvas;
+		
 		ctx.beginPath();
-
+		
 		var chars = text.split('');
 		var charsLength = chars.length;
 		for (var i = 0; i < charsLength; i++) {
@@ -307,15 +316,15 @@ CanvasTypeface.prototype = {
 		ctx.fill();
 
 		if (style.textDecoration == 'underline') {
-
 			ctx.beginPath();
 			ctx.moveTo(0, face.underlinePosition);
-			//ctx.restore();
 			ctx.lineTo(0, face.underlinePosition);
 			ctx.strokeStyle = style.color;
 			ctx.lineWidth = face.underlineThickness;
 			ctx.stroke();
 		}
+		
+		return { element: ctx.canvas, width: Math.floor(canvas.width), height: Math.floor(canvas.height)};
 	}
 };
 
