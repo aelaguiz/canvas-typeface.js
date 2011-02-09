@@ -32,12 +32,12 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 *****************************************************************/
-Typeface = function() {
-	this.faces: {}
+CanvasTypeface = function() {
+	this.faces = {}
 }
 
-Typeface.prototype = {
-	constructor: new Typeface(),
+CanvasTypeface.prototype = {
+	constructor: new CanvasTypeface(),
 
 
 	loadFace: function(typefaceData) {
@@ -161,7 +161,7 @@ Typeface.prototype = {
 			color: options.color, 
 			fontFamily: options.fontFamily.split(/\s*,\s*/)[0].replace(/(^"|^'|'$|"$)/g, '').toLowerCase(), 
 			fontSize: options.fontSize,
-			fontWeight: this.cssFontWeightMap[browserStyle.fontWeight],
+			fontWeight: this.cssFontWeightMap[options.fontWeight],
 			fontStyle: options.fontStyle ? options.fontStyle : 'normal',
 			fontStretchPercent: this.cssFontStretchMap[options['font-stretch'] ? options['font-stretch'] : 'default'],
 			textDecoration: options.textDecoration,
@@ -315,3 +315,5 @@ Typeface.prototype = {
 		ctx.restore();	
 	}
 };
+
+_typeface_js = new CanvasTypeface();
