@@ -33,12 +33,12 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 *****************************************************************/
 Typeface = function() {
-	
+	this.faces: {}
 }
 
 Typeface.prototype = {
+	constructor: new Typeface(),
 
-	faces: {},
 
 	loadFace: function(typefaceData) {
 
@@ -156,16 +156,6 @@ Typeface.prototype = {
 	capitalizeText: function(text) {
 		return text.replace(/(^|\s)[a-z]/g, function(match) { return match.toUpperCase() } ); 
 	},
-
-	getElementStyle: function(e) {
-		if (window.getComputedStyle) {
-			return window.getComputedStyle(e, '');
-		
-		} else if (e.currentStyle) {
-			return e.currentStyle;
-		}
-	},
-
 	render: function(text, options, graphics) {
 		var style = { 
 			color: options.color, 
@@ -227,33 +217,18 @@ Typeface.prototype = {
 		for (var i = 0; i < wordsLength; i++) {
 			var word = words[i];
 			
-			var vector = this.renderWord(face, style, word, graphics);
+			this.renderWord(face, style, word, graphics);
 		}
 	},
 
-	initializeSurface: function(face, style, text) {
+	initializeSurface: function(face, style, text, ctx) {
 
 		var extents = this.getTextExtents(face, style, text);
-
-		var canvas = document.createElement('canvas');
-		if (this.disableSelection) {
-			canvas.innerHTML = text;
-		}
-
-		canvas.height = Math.round(this.pixelsFromPoints(face, style, face.lineHeight));
-		canvas.width = Math.round(this.pixelsFromPoints(face, style, extents.x, 'horizontal'));
-
-		if (extents.x > extents.ha) 
-			canvas.style.marginRight = Math.round(this.pixelsFromPoints(face, style, extents.x - extents.ha, 'horizontal')) + 'px';
-
-		var ctx = canvas.getContext('2d');
 
 		var pointScale = this.pixelsFromPoints(face, style, 1);
 		ctx.scale(pointScale * style.fontStretchPercent, -1 * pointScale);
 		ctx.translate(0, -1 * face.ascender);
 		ctx.fillStyle = style.color;
-
-		return { context: ctx, canvas: canvas };
 	},
 	renderGlyph: function(ctx, face, char, style) {
 
@@ -310,10 +285,11 @@ Typeface.prototype = {
 			ctx.translate(glyph.ha + letterSpacingPoints, 0);
 		}
 	},
-	renderWord: function(face, style, text) {
-		var surface = this.initializeSurface(face, style, text);
-		var ctx = surface.context;
-		var canvas = surface.canvas;
+	renderWord: function(face, style, text, ctx) {
+		ctx.save();
+		
+		this.initializeSurface(face, style, text, ctx);
+
 		ctx.beginPath();
 		ctx.save();
 
@@ -336,7 +312,6 @@ Typeface.prototype = {
 			ctx.stroke();
 		}
 
-		return { element: ctx.canvas, width: Math.floor(canvas.width) };
-	
+		ctx.restore();	
 	}
 };
