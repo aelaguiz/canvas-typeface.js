@@ -1,3 +1,0 @@
-[submodule "example/express"]
-	path = example/express
-	url = https://github.com/visionmedia/express.git
