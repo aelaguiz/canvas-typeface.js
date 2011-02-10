@@ -37,11 +37,11 @@ function loop(canvas) {
   		
   		graphics.translate(100, size+2);
   		
-  		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 300, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
+  		/*Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 300, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
   		
   		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 200, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
   		
-  		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 100, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
+  		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 100, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);*/
   		
   		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 0, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
   	//}
