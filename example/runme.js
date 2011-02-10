@@ -1,10 +1,10 @@
 //setup Dependencies
 GLOBAL.DEBUG = true;
 
-require(__dirname + "/setup").ext( __dirname + "/lib/express/support");
+require(__dirname + "/setup").ext( __dirname + "/express/support");
 
 var connect = require('connect')
-    , express = require('./express')
+    , express = require('express')
     , sys = require('sys')
     , port = 8081;
 
