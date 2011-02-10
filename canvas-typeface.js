@@ -319,7 +319,7 @@ CanvasTypeface.prototype = {
 			 * Draws an origin x so it's easier to picture rotation, but not useful for production
 			 */
 
-			/*
+			
 			ctx.lineWidth=5;
 			this.rotateCoordinates([originX, 0, z], rotCoords, rX,rY,rZ, originX, originY, 0);
 			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
@@ -341,7 +341,7 @@ CanvasTypeface.prototype = {
 			
 			ctx.stroke();
 			
-			ctx.lineWidth=1;*/
+			ctx.lineWidth=1;
 			
 			var outlineLength = outline.length;
 			for (var i = 0; i < outlineLength; ) {
