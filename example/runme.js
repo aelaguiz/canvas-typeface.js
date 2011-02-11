@@ -1,7 +1,7 @@
 //setup Dependencies
 GLOBAL.DEBUG = true;
 
-require(__dirname + "/setup").ext( __dirname + "/express/support");
+require(__dirname + "/setup").ext( __dirname ).ext( __dirname + "/express/support");
 
 var connect = require('connect')
     , express = require('express')
