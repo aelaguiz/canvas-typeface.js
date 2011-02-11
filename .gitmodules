@@ -1,3 +1,6 @@
 [submodule "example/express"]
 	path = example/express
 	url = https://github.com/visionmedia/express.git
+[submodule "canvas-simple3d"]
+	path = canvas-simple3d
+	url = git@github.com:aelaguiz/canvas-simple3d.git
