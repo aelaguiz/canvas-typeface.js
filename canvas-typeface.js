@@ -250,6 +250,11 @@ CanvasTypeface.prototype = {
 			return this.renderGlyph(ctx, face, this.fallbackCharacter, style);
 		}
 
+		glyphWidth = glyph.x_max-glyph.x_min;
+		glyphHeight = face.ascender;
+		
+		ctx.save();
+		ctx.scale(glyphWidth, glyphHeight);
 		
 		if (glyph.o) {
 			
@@ -261,8 +266,7 @@ CanvasTypeface.prototype = {
 				glyph.cached_outline = outline;
 			}
 			
-			glyphWidth = glyph.x_max-glyph.x_min;
-			glyphHeight = face.ascender;
+			
 			
 			originX = glyphWidth/2;
 			originY = glyphHeight/2;
@@ -274,32 +278,33 @@ CanvasTypeface.prototype = {
 
 				switch(action) {
 					case 'm':
-						ctx.moveTo(parseInt(outline[i++]), parseInt(outline[i++]));
+						ctx.moveTo(parseInt(outline[i++])/glyphWidth, parseInt(outline[i++])/glyphHeight);
 						break;
 						
 					case 'l':
-						ctx.lineTo(parseInt(outline[i++]), parseInt(outline[i++]));
+						ctx.lineTo(parseInt(outline[i++])/glyphWidth, parseInt(outline[i++])/glyphHeight);
 						break;
 
 					case 'q':
-						tempX = parseInt(outline[i++]);
-						tempY = parseInt(outline[i++]);
+						tempX = parseInt(outline[i++])/glyphWidth;
+						tempY = parseInt(outline[i++])/glyphHeight;
 
-						ctx.quadraticCurveTo(parseInt(outline[i++]), parseInt(outline[i++]), tempX, tempY);
+						ctx.quadraticCurveTo(parseInt(outline[i++])/glyphWidth, parseInt(outline[i++])/glyphHeight, tempX, tempY);
 						break;
 
 					case 'b':
-						tempX = parseInt(outline[i++]);
-						tempY = parseInt(outline[i++]);
+						tempX = parseInt(outline[i++])/glyphWidth;
+						tempY = parseInt(outline[i++])/glyphHeight;
 						
-						bezX = parseInt(outline[i++]);
-						bezY = parseInt(outline[i++]);
+						bezX = parseInt(outline[i++])/glyphWidth;
+						bezY = parseInt(outline[i++])/glyphHeight;
 						
-						ctx.bezierCurveTo(bezX, bezY, parseInt(outline[i++]), parseInt(outline[i++]), tempX, tempY);
+						ctx.bezierCurveTo(bezX, bezY, parseInt(outline[i++])/glyphWidth, parseInt(outline[i++])/glyphHeight, tempX, tempY);
 						break;
 				}
 			}					
 		}
+		ctx.restore();
 		if (glyph.ha) {
 			var letterSpacingPoints = 
 				style.letterSpacing && style.letterSpacing != 'normal' ? 
