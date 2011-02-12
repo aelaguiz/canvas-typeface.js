@@ -274,28 +274,28 @@ CanvasTypeface.prototype = {
 
 				switch(action) {
 					case 'm':
-						ctx.moveTo(outline[i++], outline[i++]);
+						ctx.moveTo(parseInt(outline[i++]), parseInt(outline[i++]));
 						break;
 						
 					case 'l':
-						ctx.lineTo(outline[i++], outline[i++]);
+						ctx.lineTo(parseInt(outline[i++]), parseInt(outline[i++]));
 						break;
 
 					case 'q':
-						tempX = outline[i++];
-						tempY = outline[i++];
+						tempX = parseInt(outline[i++]);
+						tempY = parseInt(outline[i++]);
 
-						ctx.quadraticCurveTo(outline[i++], outline[i++], tempX, tempY);
+						ctx.quadraticCurveTo(parseInt(outline[i++]), parseInt(outline[i++]), tempX, tempY);
 						break;
 
 					case 'b':
-						tempX = outline[i++];
-						tempY = outline[i++];
+						tempX = parseInt(outline[i++]);
+						tempY = parseInt(outline[i++]);
 						
-						bezX = outline[i++];
-						bezY = outline[i++];
+						bezX = parseInt(outline[i++]);
+						bezY = parseInt(outline[i++]);
 						
-						ctx.bezierCurveTo(bezX, bezY, outline[i++], outline[i++], tempX, tempY);
+						ctx.bezierCurveTo(bezX, bezY, parseInt(outline[i++]), parseInt(outline[i++]), tempX, tempY);
 						break;
 				}
 			}					
