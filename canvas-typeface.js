@@ -167,12 +167,7 @@ CanvasTypeface.prototype = {
 			textDecoration: options.textDecoration,
 			lineHeight: options.lineHeight,
 			letterSpacing: options.letterSpacing ? options.letterSpacing : 0,
-			textTransform: options.textTransform,
-			rotationX: options.rotationX ? options.rotationX: 0,
-			rotationY: options.rotationY ? options.rotationY: 0,
-			rotationZ: options.rotationZ ? options.rotationZ: 0,
-			eyeDistance: options.eyeDistance ? options.eyeDistance: 0,
-			z: options.z ? options.z: 0,
+			textTransform: options.textTransform
 		};
 
 		var face;
@@ -232,7 +227,6 @@ CanvasTypeface.prototype = {
 		
 		ctx.restore();
 	},
-
 	initializeSurface: function(face, style, text, ctx) {
 
 		var extents = this.getTextExtents(face, style, text);
@@ -242,55 +236,14 @@ CanvasTypeface.prototype = {
 		ctx.translate(0, -1 * face.ascender);
 		ctx.fillStyle = style.color;
 	},
-	projectedX: function projectedX(x, y,z, eyeDistance) {
-		return x / ((z + eyeDistance)/eyeDistance);
-	},
-	projectedY: function projectedY(x, y,z, eyeDistance) {
-		return y / ((z + eyeDistance)/eyeDistance);
-	},
-	projectedCoords: function projectedCoords(x, y, z, eyeDistance) {
-		return {x: this.projectedX(x,y,z,eyeDistance), y: this.projectedY(x,y,z,eyeDistance)};
-	},
-	rotateCoordinates: function rotateCoordinates(inCoords, outCoords,RadianX, RadianY, RadianZ, OriginX, OriginY, OriginZ) {
-		var x= inCoords[0]-OriginX,
-			y = inCoords[1]-OriginY,
-			z = inCoords[2]-OriginZ,
-			sinY = Math.sin(RadianY),
-			sinX = Math.sin(RadianX),
-			sinZ = Math.sin(RadianZ),
-			cosY = Math.cos(RadianY),
-			cosX = Math.cos(RadianX),
-			cosZ = Math.cos(RadianZ);
-		
-		outCoords[0] = (x * (cosY * cosZ)) + 
-						(y * (-cosX*sinZ+sinX*sinY*cosZ)) + 
-						(z * (sinX*sinZ+cosX*sinY*cosZ)) + OriginX;
-						
-		outCoords[1] = (x * (cosY * sinZ)) + 
-						(y * (cosX * cosZ+sinX*sinY*sinZ)) + 
-						(z * (-sinX * cosZ+cosX*sinY*sinZ)) + OriginY;
-						
-		outCoords[2] = (x * -sinY) + 
-						(y * (sinX * cosY)) + 
-						(z * (cosX * cosY)) + OriginZ;
-						
-	},
 	renderGlyph: function(ctx, face, char, style) {
-		var z = style.z,
-			eyeDistance = style.eyeDistance,
-			rX = style.rotationX, 
-			rY = style.rotationY, 
-			rZ = style.rotationZ,
-		 	coords,
-			rotCoords = [],
-			quadCoords,
-			bezCoords,
-			glyphWidth,
+		var glyphWidth,
 			glyphHeight,
-			originX = 0,
-			originY = 0,
-			originZ = style.z/2;
-		var glyph = face.glyphs[char];
+			originX,
+			originY,
+			tempX,tempY,
+			bezX,bezY
+			glyph = face.glyphs[char];
 
 		if (!glyph) {
 			//this.log.error("glyph not defined: " + char);
@@ -314,35 +267,6 @@ CanvasTypeface.prototype = {
 			originX = glyphWidth/2;
 			originY = glyphHeight/2;
 
-
-			/*
-			 * Draws an origin x so it's easier to picture rotation, but not useful for production
-			 */
-
-			
-			ctx.lineWidth=5;
-			this.rotateCoordinates([originX, 0, z], rotCoords, rX,rY,rZ, originX, originY, 0);
-			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-			ctx.moveTo(coords.x, coords.y);
-			
-			this.rotateCoordinates([originX, glyphHeight, z], rotCoords, rX,rY,rZ, originX, originY, 0);
-			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-			ctx.lineTo(coords.x, coords.y);
-			
-			ctx.stroke();
-			
-			this.rotateCoordinates([0, originY, z], rotCoords, rX,rY,rZ, originX, originY, 0);
-			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-			ctx.moveTo(coords.x, coords.y);
-			
-			this.rotateCoordinates([glyphWidth, originY, z], rotCoords, rX,rY,rZ, originX, originY, 0);
-			coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-			ctx.lineTo(coords.x, coords.y);
-			
-			ctx.stroke();
-			
-			ctx.lineWidth=1;
-			
 			var outlineLength = outline.length;
 			for (var i = 0; i < outlineLength; ) {
 
@@ -350,36 +274,28 @@ CanvasTypeface.prototype = {
 
 				switch(action) {
 					case 'm':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-						ctx.moveTo(coords.x, coords.y);
+						ctx.moveTo(outline[i++], outline[i++]);
 						break;
+						
 					case 'l':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-						ctx.lineTo(coords.x, coords.y);
+						ctx.lineTo(outline[i++], outline[i++]);
 						break;
 
 					case 'q':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-						ctx.quadraticCurveTo(quadCoords.x, quadCoords.y, coords.x, coords.y);
+						tempX = outline[i++];
+						tempY = outline[i++];
+
+						ctx.quadraticCurveTo(outline[i++], outline[i++], tempX, tempY);
 						break;
 
 					case 'b':
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						coords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						tempX = outline[i++];
+						tempY = outline[i++];
 						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						bezCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
+						bezX = outline[i++];
+						bezY = outline[i++];
 						
-						this.rotateCoordinates([outline[i++], outline[i++], z], rotCoords, rX,rY,rZ, originX, originY, originZ);
-						quadCoords = this.projectedCoords(rotCoords[0],rotCoords[1],rotCoords[2], eyeDistance);
-						
-						ctx.bezierCurveTo(bezCoords.x, bezCoords.y, quadCoords.x, quadCoords.y, coords.x, coords.y);
+						ctx.bezierCurveTo(bezX, bezY, outline[i++], outline[i++], tempX, tempY);
 						break;
 				}
 			}					

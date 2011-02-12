@@ -6,7 +6,7 @@ require(__dirname + "/setup").ext( __dirname ).ext( __dirname + "/express/suppor
 var connect = require('connect')
     , express = require('express')
     , sys = require('sys')
-    , port = 8080;
+    , port = 8081;
 
 //Setup Express
 var server = express.createServer();
