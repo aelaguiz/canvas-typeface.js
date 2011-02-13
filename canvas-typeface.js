@@ -270,7 +270,7 @@ CanvasTypeface.prototype = {
 			/*
 			 * Hinter for use by simple3d
 			 */
-			if(ctx.glyphDimensions instanceof Function) {
+			if(ctx.setGlyphDimensions instanceof Function) {
 				ctx.setGlyphDimensions(glyphWidth, glyphHeight);				
 			}
 
