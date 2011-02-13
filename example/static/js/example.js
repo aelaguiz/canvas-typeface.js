@@ -43,7 +43,7 @@ function loop(canvas) {
   		
   		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 100, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);*/
   		
-  		Typeface.render("LOL TEXT", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 0, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
+  		Typeface.render("i", {'rotationX': rotationX*Math.PI/180, 'rotationY': rotationY*Math.PI/180, eyeDistance: 20000, z: 0, fontFamily: "Helvetiker", color: "#FF0000", fontSize: size}, graphics);
   	//}
     graphics.restore();
 }

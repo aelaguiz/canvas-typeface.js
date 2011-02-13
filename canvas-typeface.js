@@ -237,12 +237,10 @@ CanvasTypeface.prototype = {
 		ctx.fillStyle = style.color;
 	},
 	renderGlyph: function(ctx, face, char, style) {
-		var glyphWidth,
-			glyphHeight,
-			originX,
-			originY,
-			tempX,tempY,
-			bezX,bezY
+		var tempX,
+			tempY,
+			bezX,
+			bezY
 			glyph = face.glyphs[char];
 
 		if (!glyph) {
@@ -250,7 +248,6 @@ CanvasTypeface.prototype = {
 			return this.renderGlyph(ctx, face, this.fallbackCharacter, style);
 		}
 
-		
 		if (glyph.o) {
 			
 			var outline;
@@ -259,19 +256,6 @@ CanvasTypeface.prototype = {
 			} else {
 				outline = glyph.o.split(' ');
 				glyph.cached_outline = outline;
-			}
-			
-			glyphWidth = glyph.x_max-glyph.x_min;
-			glyphHeight = face.ascender;
-			
-			originX = glyphWidth/2;
-			originY = glyphHeight/2;
-			
-			/*
-			 * Hinter for use by simple3d
-			 */
-			if(ctx.setGlyphDimensions instanceof Function) {
-				ctx.setGlyphDimensions(glyphWidth, glyphHeight);				
 			}
 
 			var outlineLength = outline.length;
